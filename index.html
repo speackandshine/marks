@@ -1,0 +1,1174 @@
+<!doctype html>
+<html lang="si">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>සිසු ලකුණු</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+  // ප්‍රධාන script එක ආරම්භ වීමට නොහැකි වුවහොත් "ලබාගනිමින්" ලෙස හිරවී නොසිට හේතුව පෙන්වයි.
+  window.addEventListener('error', function () {
+    var el = document.getElementById('splash');
+    if (el) el.textContent = 'පිටුව ආරම්භ කළ නොහැකි විය. පිටුව refresh කරන්න.';
+  });
+</script>
+<style>
+  :root {
+    color-scheme: light;
+    --board:#17362f; --board-2:#234a41; --board-line:#3d6358; --chalk:#f1f5ef; --chalk-2:#bcd0c6;
+    --chalk-yellow:#f3c64f; --tray:#a9743f;
+    --page:#eef2ed; --surface:#fdfefc; --ink:#16241f; --ink-2:#47584f; --muted:#62716a;
+    --line:#dfe6e0; --base:#bccac1; --s1:#1c7a64; --s2:#8a9790; --wash:rgba(28,122,100,.1);
+    --l1:#7cc4ae; --l2:#47a58b; --l3:#1c7a64; --l4:#0e4f41;
+    --ok:#17603f; --err:#b3261e; --warn:#7a4f00;
+  }
+  * { box-sizing:border-box; }
+  html, body { margin:0; background:var(--page); color:var(--ink);
+    font-family:"Noto Sans Sinhala","Iskoola Pota",system-ui,sans-serif; font-size:16px; line-height:1.5; }
+  button, input, select { font:inherit; color:inherit; }
+  button { cursor:pointer; background:none; border:0; padding:0; }
+  :focus-visible { outline:2px solid var(--chalk-yellow); outline-offset:2px; }
+  main :focus-visible { outline-color:var(--s1); }
+  h1, h2, h3, p { margin:0; }
+
+  #app { display:grid; grid-template-columns:216px minmax(0,1fr); min-height:100vh; }
+  #side { background:var(--board); color:var(--chalk); padding:22px 12px; position:sticky; top:0; height:100vh;
+    display:flex; flex-direction:column; gap:4px; }
+  .brand { font-size:19px; font-weight:700; padding:0 12px 16px; }
+  .nav { display:flex; align-items:center; gap:10px; width:100%; padding:10px 12px; border-radius:8px; text-align:left;
+    color:var(--chalk-2); font-weight:500; }
+  .nav svg { width:20px; height:20px; flex:none; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .nav:hover { background:var(--board-2); color:var(--chalk); }
+  .nav[aria-current="page"] { background:var(--board-2); color:var(--chalk-yellow); font-weight:700; }
+  .side-foot { margin-top:auto; display:grid; gap:2px; font-size:14px; }
+  .side-foot a, .side-foot button { color:var(--chalk-2); padding:6px 12px; text-align:left; text-decoration:none; border-radius:6px; }
+  .side-foot a:hover, .side-foot button:hover { color:var(--chalk); background:var(--board-2); }
+
+  #board { background:var(--board); color:var(--chalk); padding:22px 28px 22px 12px; border-bottom:6px solid var(--tray); }
+  .board-top { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px 20px; }
+  #board h1 { font-size:26px; line-height:1.25; font-weight:700; }
+  .back { color:var(--chalk-2); font-size:15px; margin-bottom:4px; }
+  .back:hover { color:var(--chalk); }
+  .seg { display:inline-flex; border:1px solid var(--board-line); border-radius:8px; overflow:hidden; }
+  .seg button { padding:7px 13px; color:var(--chalk-2); font-size:15px; font-weight:500; }
+  .seg button + button { border-left:1px solid var(--board-line); }
+  .seg button:hover { color:var(--chalk); background:var(--board-2); }
+  .seg button[aria-pressed="true"] { background:var(--chalk-yellow); color:var(--board); font-weight:700; }
+  .period { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:14px; }
+  .arrow { width:38px; height:38px; border:1px solid var(--board-line); border-radius:8px; color:var(--chalk); font-size:20px; line-height:1; }
+  .arrow:hover:not(:disabled) { background:var(--board-2); }
+  .arrow:disabled { opacity:.35; cursor:default; }
+  .period-label { font-size:18px; font-weight:600; min-width:170px; text-align:center; }
+  .range { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .range input { background:var(--board-2); border:1px solid var(--board-line); color:var(--chalk); color-scheme:dark;
+    padding:6px 10px; border-radius:8px; }
+  .ruler { display:grid; grid-template-columns:auto repeat(11,minmax(0,1fr)); margin-top:14px; max-width:680px;
+    border:1px solid var(--board-line); border-radius:8px; overflow:hidden; }
+  .ruler button { min-height:40px; padding:0 12px; color:var(--chalk-2); font-weight:600; }
+  .ruler button + button { border-left:1px solid var(--board-line); padding:0 2px; }
+  .ruler button:hover { background:var(--board-2); color:var(--chalk); }
+  .ruler button[aria-pressed="true"] { background:var(--chalk-yellow); color:var(--board); }
+  .figures { display:flex; flex-wrap:wrap; align-items:flex-end; gap:16px 44px; margin-top:20px; }
+  .hero-num { font-size:60px; line-height:1; font-weight:700; }
+  .hero-num small { font-size:22px; font-weight:500; color:var(--chalk-2); }
+  .hero-cap { color:var(--chalk-2); font-size:15px; margin-top:6px; }
+  .fig b { display:block; font-size:24px; font-weight:600; line-height:1.25; }
+  .fig span { color:var(--chalk-2); font-size:14px; }
+
+  main { padding:24px 28px 40px 12px; min-width:0; }
+  #side + #content { min-width:0; }
+  .grid { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:22px; }
+  .panel { grid-column:span 6; background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:18px 20px; min-width:0; }
+  .panel.wide { grid-column:span 12; }
+  .panel.third { grid-column:span 4; }
+  .panel h2 { font-size:18px; font-weight:700; }
+  .panel .sub { color:var(--muted); font-size:14px; margin:2px 0 14px; }
+  .empty { padding:28px 8px; text-align:center; color:var(--ink-2); }
+  .empty button, .primary { background:var(--s1); color:#fff; font-weight:600; padding:10px 18px; border-radius:8px; margin-top:10px; }
+  .link { color:var(--s1); font-weight:600; margin-top:12px; }
+  .link:hover { text-decoration:underline; }
+
+  .legend { display:flex; flex-wrap:wrap; gap:4px 16px; font-size:14px; color:var(--ink-2); margin-bottom:10px; }
+  .legend i { display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; vertical-align:-1px; }
+  .legend i.ln { height:3px; width:16px; border-radius:2px; vertical-align:4px; }
+  .chart { width:100%; }
+  .chart svg { display:block; width:100%; overflow:visible; touch-action:pan-y; }
+  .chart text { font-family:inherit; font-size:12px; fill:var(--muted); font-variant-numeric:tabular-nums; }
+  .chart text.val { fill:var(--ink); font-weight:700; font-size:13px; }
+
+  .bars { display:grid; gap:2px; }
+  .bars.two { grid-template-columns:repeat(2,minmax(0,1fr)); grid-auto-flow:column; column-gap:32px; }
+  .bar { display:grid; grid-template-columns:minmax(0,42%) minmax(0,1fr) 42px; gap:10px; align-items:center;
+    padding:4px 4px; width:100%; text-align:left; border-radius:6px; font-size:15px; }
+  .bar:hover { background:#eef4ef; }
+  .bar .nm { overflow-wrap:anywhere; line-height:1.35; }
+  .bar .tk { height:14px; display:block; border-left:1px solid var(--base); }
+  .bar .fl { display:block; height:100%; background:var(--s1); border-radius:0 4px 4px 0; min-width:2px; }
+  .bar .v { text-align:right; font-weight:600; font-variant-numeric:tabular-nums; }
+  .bar.none .v { color:var(--muted); font-weight:400; }
+
+  .stack { display:grid; grid-template-columns:minmax(0,92px) minmax(0,1fr); gap:10px; align-items:center;
+    padding:4px; width:100%; text-align:left; border-radius:6px; font-size:15px; }
+  button.stack:hover { background:#eef4ef; }
+  .segs { display:flex; gap:2px; height:22px; }
+  .segs.tall { height:28px; }
+  .segs span { display:flex; align-items:center; padding-left:6px; border-radius:4px; font-size:13px; font-weight:600; min-width:0; overflow:hidden; }
+  .nomark { color:var(--muted); font-size:14px; }
+  .single { display:block; }
+  .note { color:var(--ink-2); font-size:14px; margin-top:10px; }
+
+  .names { list-style:none; padding:0; margin:0; }
+  .names li + li { border-top:1px solid var(--line); }
+  .names button { display:grid; grid-template-columns:30px minmax(0,1fr) auto; gap:8px; width:100%; padding:8px 4px; text-align:left; }
+  .names button:hover { background:#eef4ef; }
+  .names .n { color:var(--muted); font-variant-numeric:tabular-nums; }
+  .names .who { overflow-wrap:anywhere; line-height:1.35; }
+  .names .who small { color:var(--muted); font-size:13px; margin-left:6px; }
+  .names .sc { font-weight:600; font-variant-numeric:tabular-nums; }
+
+  .tools { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:14px; }
+  .tools input { flex:1 1 200px; padding:9px 12px; border:1px solid var(--base); border-radius:8px; background:#fff; }
+  .tools label { color:var(--ink-2); font-size:15px; }
+  .tools select { padding:9px 10px; border:1px solid var(--base); border-radius:8px; background:#fff; }
+  .scroll { overflow-x:auto; }
+  table { border-collapse:collapse; width:100%; font-size:15px; }
+  th { text-align:left; color:var(--ink-2); font-weight:600; font-size:14px; border-bottom:1px solid var(--base); padding:8px 10px; white-space:nowrap; }
+  td { padding:8px 10px; border-bottom:1px solid var(--line); }
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; }
+  td button { font-weight:600; color:var(--s1); text-align:left; }
+  td button:hover { text-decoration:underline; }
+  .lv { white-space:nowrap; }
+  .lv i { display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:6px; }
+  .reg th, .reg td { border:1px solid var(--line); text-align:center; }
+  .reg th { background:#e7eee9; color:var(--ink); }
+  .reg .st { position:sticky; left:0; text-align:left; background:var(--surface); min-width:150px; max-width:190px; white-space:normal; }
+  .reg th.st { background:#e7eee9; }
+
+  form.entry { max-width:440px; margin:0 auto; }
+  .field { margin-bottom:14px; }
+  .field label { display:block; font-weight:600; margin:0 0 6px; }
+  .field input, .field select, .save { width:100%; font-size:17px; padding:11px 12px; border:1px solid var(--base); border-radius:8px; background:#fff; }
+  .field input[readonly] { background:#e9efea; font-weight:600; }
+  .save { background:var(--s1); border-color:var(--s1); color:#fff; font-weight:700; }
+  .save:disabled { opacity:.5; cursor:default; }
+  .warn { min-height:21px; margin-top:6px; font-size:14px; color:var(--warn); }
+  #status { min-height:24px; margin-top:14px; font-weight:600; }
+  #status.ok { color:var(--ok); }
+  #status.err { color:var(--err); }
+
+  .form-narrow { max-width:400px; }
+  .inline { display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; }
+  .inline .field { flex:1 1 170px; margin:0; }
+  .inline .primary { margin:0; min-height:48px; }
+  .notice { padding:10px 12px; border-radius:8px; background:#e7f2ec; color:var(--ok); font-weight:600; margin-bottom:14px; overflow-wrap:anywhere; }
+  .notice.err { background:#fbeaea; color:var(--err); }
+  .temp { display:block; font-size:22px; letter-spacing:1px; margin-top:4px; color:var(--ink); }
+  .acts { display:flex; flex-wrap:wrap; gap:6px 14px; }
+  .acts button { color:var(--s1); font-weight:600; font-size:14px; }
+  .acts button.danger { color:var(--err); }
+  .stu th:first-child, .stu td:first-child { width:72px; font-variant-numeric:tabular-nums; }
+  .stu .acts { justify-content:flex-end; }
+  .edit-name { width:100%; padding:7px 9px; border:1px solid var(--base); border-radius:6px; background:#fff; }
+  td select { padding:5px 6px; border:1px solid var(--base); border-radius:6px; background:#fff; }
+  .muted { color:var(--muted); }
+  .who-box { padding:0 12px 10px; color:var(--chalk-2); font-size:14px; }
+  .who-box b { display:block; color:var(--chalk); font-size:15px; }
+  .stack-list { display:grid; gap:8px; margin-top:6px; }
+  .stack-list button, .stack-list a { display:block; padding:12px; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--ink); font-weight:600; text-align:left; text-decoration:none; }
+  #tip { position:fixed; z-index:20; display:none; pointer-events:none; background:var(--ink); color:#fff; padding:7px 10px;
+    border-radius:6px; font-size:14px; max-width:230px; }
+  #tip div { display:flex; gap:8px; justify-content:space-between; }
+  #tip b { font-variant-numeric:tabular-nums; }
+  #tip .hd { color:#c7d3cc; font-size:13px; }
+  #splash { padding:64px 20px; text-align:center; color:var(--ink-2); }
+
+  @media (max-width:820px) {
+    #app { display:block; padding-bottom:70px; }
+    #side { position:fixed; z-index:10; left:0; right:0; bottom:0; top:auto; height:auto; padding:4px 4px calc(4px + env(safe-area-inset-bottom));
+      flex-direction:row; border-top:4px solid var(--tray); }
+    .brand, .side-foot, .desk { display:none; }
+    .nav { flex:1 1 0; flex-direction:column; gap:1px; padding:6px 2px; font-size:12px; text-align:center; }
+    #board { padding:16px; }
+    #board h1 { font-size:22px; }
+    main { padding:16px; }
+    .grid { gap:16px; }
+    .panel, .panel.wide, .panel.third { grid-column:span 12; padding:14px; }
+    .bars.two { grid-template-columns:minmax(0,1fr); grid-template-rows:none !important; grid-auto-flow:row; }
+    .bar { grid-template-columns:minmax(0,46%) minmax(0,1fr) 38px; }
+    .hero-num { font-size:52px; }
+    .figures { gap:12px 24px; }
+    .seg { display:flex; width:100%; }
+    .seg button { flex:1 1 auto; padding:7px 4px; font-size:14px; }
+    .period-label { flex:1; min-width:0; font-size:16px; }
+    .ruler button:first-child { padding:0 8px; font-size:14px; }
+    .hide-sm { display:none; }
+    th, td { padding:8px 6px; }
+    .cards thead { display:none; }
+    .cards, .cards tbody, .cards tr, .cards td { display:block; width:100%; }
+    .cards tr { padding:10px 0; border-bottom:1px solid var(--base); }
+    .cards td { border:0; padding:3px 0; }
+  }
+</style>
+<script src="config.js"></script>
+</head>
+<body>
+<div id="app">
+  <aside id="side"></aside>
+  <div id="content">
+    <div id="board"></div>
+    <main id="view"><div id="splash">ලකුණු ලබාගනිමින්...</div></main>
+  </div>
+</div>
+<div id="tip" role="status"></div>
+<script>
+  var MONTHS = ['ජනවාරි','පෙබරවාරි','මාර්තු','අප්‍රේල්','මැයි','ජූනි','ජූලි','අගෝස්තු','සැප්තැම්බර්','ඔක්තෝබර්','නොවැම්බර්','දෙසැම්බර්'];
+  var DAY = 86400000;
+  // ලකුණු මට්ටම්: සාමාන්‍යය උපරිම ලකුණුවලින් කොපමණ කොටසක්ද යන්න අනුව
+  var LEVELS = [
+    { name:'ඉහළ', from:0.8, color:'var(--l4)', ink:'#ffffff' },
+    { name:'හොඳ', from:0.6, color:'var(--l3)', ink:'#ffffff' },
+    { name:'මධ්‍යම', from:0.4, color:'var(--l2)', ink:'#16241f' },
+    { name:'අඩු', from:0, color:'var(--l1)', ink:'#16241f' }
+  ];
+  var ICONS = {
+    overview:'M4 20V10M10 20V4M16 20v-7M21 20H3',
+    ranking:'M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01',
+    register:'M4 5a2 2 0 0 1 2-2h14v16H6a2 2 0 0 0-2 2V5zM9 8h7',
+    entry:'M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z',
+    students:'M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM19 8v6M22 11h-6',
+    teachers:'M12 3l9 5-9 5-9-5zM7 11v5c3 2 7 2 10 0v-5',
+    account:'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z'
+  };
+  function navItems() {
+    var items = [['overview', 'දළ විශ්ලේෂණය'], ['ranking', 'ස්ථාන ලැයිස්තුව'], ['register', 'ලකුණු පොත']];
+    if (state.user) {
+      items.push(['entry', 'ලකුණු ඇතුළත් කිරීම'], ['students', 'සිසුන්', true]);
+      if (state.user.role === 'admin') items.push(['teachers', 'ගුරුවරුන්', true]);
+      items.push(['account', 'මගේ ගිණුම']);
+    } else {
+      items.push(['login', 'ගුරු පිවිසුම']);
+    }
+    return items;
+  }
+  var state = { view:'overview', grade:'all', mode:'month', anchor:'', from:'', to:'', student:null,
+                sort:'total', search:'', data:null, user:null, token:null, notice:null,
+                manageGrade:null, expired:null, renameKey:null, confirmKey:null, tempPassword:null };
+  var entry = { grade:'', number:'', date:'', mark:'', saving:false, status:'', statusKind:'' };
+  var observer = null;
+  var SESSION_ERROR = 'පිවිසුම කල් ඉකුත් වී ඇත. නැවත පිවිසෙන්න.';
+
+  // ===== Server ඇමතුම් =====
+  // credentials:'omit' නිසා Google ගිණුම් තොරතුරු නොයවයි. එබැවින් /u/6/ ගැටලුව නැහැ.
+  function api(name, args, ok, fail) {
+    function failed(err) {
+      if (err.message === SESSION_ERROR) {
+        forgetSession();
+        state.notice = { text:SESSION_ERROR, kind:'err' };
+        state.view = 'login';
+        if (state.data) render(); else load();
+      } else if (fail) {
+        fail(err);
+      } else {
+        state.notice = { text:err.message, kind:'err' };
+        render();
+      }
+    }
+    fetch(window.API_URL, { method:'POST', credentials:'omit', redirect:'follow',
+      headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body:JSON.stringify({ fn:name, args:args }) })
+      .then(function (r) {
+        if (!r.ok) throw new Error('bad status');
+        return r.json();
+      })
+      .catch(function () { throw new Error('සේවාදායකයට සම්බන්ධ වීමට නොහැකියි. අන්තර්ජාලය පරීක්ෂා කර නැවත උත්සාහ කරන්න.'); })
+      .then(function (res) {
+        if (!res.ok) throw new Error(res.error || 'දෝෂයක් ඇති විය.');
+        ok(res.value);
+      })
+      .catch(failed);
+    return;
+  }
+  function savedToken() { try { return sessionStorage.getItem('marks-token'); } catch (e) { return null; } }
+  function rememberSession(token) { try { sessionStorage.setItem('marks-token', token); } catch (e) {} }
+  function forgetSession() {
+    state.user = null; state.token = null;
+    try { sessionStorage.removeItem('marks-token'); } catch (e) {}
+  }
+  function isAdmin() { return !!state.user && state.user.role === 'admin'; }
+  function allowedGrades() {
+    if (!state.user) return [];
+    return state.data.grades.map(function (g) { return g.grade; }).filter(function (g) {
+      return isAdmin() || g === state.user.grade;
+    });
+  }
+  function noticeBox() {
+    if (!state.notice) return null;
+    var box = h('div', { 'class':'notice' + (state.notice.kind === 'err' ? ' err' : ''), role:'status' }, state.notice.text);
+    state.notice = null;
+    return box;
+  }
+
+  // ===== DOM =====
+  function h(tag, attrs) {
+    var el = document.createElement(tag);
+    setAttrs(el, attrs);
+    for (var i = 2; i < arguments.length; i++) add(el, arguments[i]);
+    return el;
+  }
+  function s(tag, attrs) {
+    var el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    setAttrs(el, attrs);
+    return el;
+  }
+  function setAttrs(el, attrs) {
+    Object.keys(attrs || {}).forEach(function (k) {
+      var v = attrs[k];
+      if (k === 'on') { Object.keys(v).forEach(function (e) { el.addEventListener(e, v[e]); }); }
+      else if (k === 'style') { el.style.cssText = v; }
+      else if (v !== null && v !== undefined && v !== false) { el.setAttribute(k, v); }
+    });
+  }
+  function add(el, kid) {
+    if (kid === null || kid === undefined || kid === false) return;
+    if (Array.isArray(kid)) { kid.forEach(function (k) { add(el, k); }); return; }
+    el.appendChild(kid.nodeType ? kid : document.createTextNode(kid));
+  }
+  function clear(el) { el.textContent = ''; return el; }
+  function fmt(x) { return String(Math.round(x * 10) / 10); }
+
+  // ===== දින =====
+  function toUtc(iso) { var p = iso.split('-').map(Number); return new Date(Date.UTC(p[0], p[1] - 1, p[2])); }
+  function toIso(d) { return d.toISOString().slice(0, 10); }
+  function addDays(iso, n) { return toIso(new Date(toUtc(iso).getTime() + n * DAY)); }
+  function dots(iso) { return iso.replace(/-/g, '.'); }
+  function monday(iso) { return addDays(iso, -((toUtc(iso).getUTCDay() + 6) % 7)); }
+  function daysBetween(a, b) { return Math.round((toUtc(b) - toUtc(a)) / DAY) + 1; }
+
+  function periodOf(mode, anchor, from, to) {
+    var p = toUtc(anchor), y = p.getUTCFullYear(), m = p.getUTCMonth();
+    if (mode === 'week') { var f = monday(anchor); return { from:f, to:addDays(f, 6), label:dots(f) + ' - ' + dots(addDays(f, 6)), prevName:'පෙර සතියට' }; }
+    if (mode === 'month') return { from:toIso(new Date(Date.UTC(y, m, 1))), to:toIso(new Date(Date.UTC(y, m + 1, 0))), label:y + ' ' + MONTHS[m], prevName:'පෙර මාසයට' };
+    if (mode === 'year') return { from:y + '-01-01', to:y + '-12-31', label:String(y), prevName:'පෙර වසරට' };
+    return { from:from, to:to, label:dots(from) + ' - ' + dots(to), prevName:'පෙර කාලයට' };
+  }
+  function shifted(dir) {
+    var p = toUtc(state.anchor);
+    if (state.mode === 'week') return { anchor:addDays(state.anchor, 7 * dir) };
+    if (state.mode === 'month') return { anchor:toIso(new Date(Date.UTC(p.getUTCFullYear(), p.getUTCMonth() + dir, 1))) };
+    if (state.mode === 'year') return { anchor:(p.getUTCFullYear() + dir) + '-01-01' };
+    var span = daysBetween(state.from, state.to);
+    return { from:addDays(state.from, span * dir), to:addDays(state.to, span * dir) };
+  }
+  function period() { return periodOf(state.mode, state.anchor, state.from, state.to); }
+  function previousPeriod() {
+    var v = shifted(-1);
+    return periodOf(state.mode, v.anchor || state.anchor, v.from, v.to);
+  }
+
+  // ===== ගණනය =====
+  function levelOf(avg) {
+    var ratio = avg / state.data.maxMark;
+    for (var i = 0; i < LEVELS.length; i++) if (ratio >= LEVELS[i].from) return LEVELS[i];
+    return LEVELS[LEVELS.length - 1];
+  }
+  function selectedGrades(which) {
+    return state.data.grades.filter(function (g) { return which === 'all' || g.grade === which; });
+  }
+  function compute(which, p) {
+    var res = { rows:[], sum:0, n:0, avg:null, byDate:{} };
+    selectedGrades(which).forEach(function (g) {
+      g.students.forEach(function (st) {
+        var row = { key:g.grade + '_' + st.no, grade:g.grade, no:st.no, name:st.name, total:0, days:0, avg:null, level:null, marks:[] };
+        Object.keys(st.m).forEach(function (d) {
+          if (d < p.from || d > p.to) return;
+          var v = st.m[d];
+          row.total += v; row.days += 1; row.marks.push([d, v]);
+          var day = res.byDate[d] || (res.byDate[d] = { sum:0, n:0 });
+          day.sum += v; day.n += 1;
+        });
+        row.marks.sort(function (a, b) { return a[0] < b[0] ? -1 : 1; });
+        if (row.days) { row.avg = row.total / row.days; row.level = levelOf(row.avg); }
+        res.sum += row.total; res.n += row.days;
+        res.rows.push(row);
+      });
+    });
+    if (res.n) res.avg = res.sum / res.n;
+    return res;
+  }
+  /** තෝරාගත් මිනුම අනුව පෙළගැස්ම. සමාන අගය ඇති සිසුන්ට එකම ස්ථානය. */
+  function ranked(rows, metric) {
+    var list = rows.slice().sort(function (a, b) {
+      if (!a.days !== !b.days) return a.days ? -1 : 1;
+      return (b[metric] - a[metric]) || (b.total - a.total) || (b.days - a.days) || (a.grade - b.grade) || (Number(a.no) - Number(b.no));
+    });
+    var rank = 0, last = null;
+    list.forEach(function (r, i) {
+      if (!r.days) { r.rank = null; return; }
+      if (r[metric] !== last) { rank = i + 1; last = r[metric]; }
+      r.rank = rank;
+    });
+    return list;
+  }
+  function bucketKey(d, unit) { return unit === 'day' ? d : unit === 'week' ? monday(d) : d.slice(0, 7); }
+  function bucketUnit(p) {
+    var span = daysBetween(p.from, p.to);
+    return span <= 35 ? 'day' : span <= 130 ? 'week' : 'month';
+  }
+  function bucketLabel(key, unit) {
+    if (unit === 'month') return MONTHS[Number(key.slice(5, 7)) - 1];
+    return key.slice(5).replace('-', '.');
+  }
+  function bucketLong(key, unit) {
+    if (unit === 'month') return key.slice(0, 4) + ' ' + MONTHS[Number(key.slice(5, 7)) - 1];
+    if (unit === 'week') return dots(key) + ' සතිය';
+    return dots(key);
+  }
+  function buckets(byDate, unit) {
+    var out = {};
+    Object.keys(byDate).forEach(function (d) {
+      var k = bucketKey(d, unit), b = out[k] || (out[k] = { sum:0, n:0 });
+      b.sum += byDate[d].sum; b.n += byDate[d].n;
+    });
+    return out;
+  }
+
+  // ===== Tooltip =====
+  var tip = document.getElementById('tip');
+  function showTip(x, y, head, lines) {
+    clear(tip);
+    add(tip, h('div', { 'class':'hd' }, head));
+    lines.forEach(function (l) { add(tip, h('div', {}, h('span', {}, l[0]), h('b', {}, l[1]))); });
+    tip.style.display = 'block';
+    var r = tip.getBoundingClientRect();
+    tip.style.left = Math.max(6, Math.min(x + 12, window.innerWidth - r.width - 6)) + 'px';
+    tip.style.top = Math.max(6, y - r.height - 12) + 'px';
+  }
+  function hideTip() { tip.style.display = 'none'; }
+  function tipEvents(head, lines) {
+    return {
+      pointerenter:function (e) { showTip(e.clientX, e.clientY, head, lines); },
+      pointerleave:hideTip,
+      focus:function (e) { var r = e.target.getBoundingClientRect(); showTip(r.left, r.top, head, lines); },
+      blur:hideTip
+    };
+  }
+
+  // ===== ප්‍රස්තාර =====
+  function legend(items) {
+    return h('div', { 'class':'legend' }, items.map(function (it) {
+      return h('span', {}, h('i', { 'class':it.line ? 'ln' : null, style:'background:' + it.color }), it.name);
+    }));
+  }
+  function drawLine(box, labels, longs, series) {
+    clear(box); hideTip();
+    var W = box.clientWidth || 640, H = W < 480 ? 210 : 260, T = 16, R = 26, B = 26, L = 26;
+    var max = state.data.maxMark, n = labels.length, iw = W - L - R, ih = H - T - B;
+    var x = function (i) { return n === 1 ? L + iw / 2 : L + i * iw / (n - 1); };
+    var y = function (v) { return T + ih * (1 - v / max); };
+    var svg = s('svg', { viewBox:'0 0 ' + W + ' ' + H, height:H, tabindex:0, role:'img',
+      'aria-label':series[0].name + ' ප්‍රස්තාරය, ' + longs[0] + ' සිට ' + longs[n - 1] + ' දක්වා' });
+
+    [0, max / 2, max].forEach(function (t) {
+      svg.appendChild(s('line', { x1:L, x2:W - R, y1:y(t), y2:y(t), stroke:t ? 'var(--line)' : 'var(--base)' }));
+      var label = s('text', { x:L - 6, y:y(t) + 4, 'text-anchor':'end' }); label.textContent = fmt(t); svg.appendChild(label);
+    });
+    var step = Math.max(1, Math.ceil(n / (W < 480 ? 4 : 8)));
+    labels.forEach(function (lb, i) {
+      if (i % step && i !== n - 1) return;
+      if (i !== n - 1 && n - 1 - i < step) return;
+      var anchor = n === 1 ? 'middle' : i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle';
+      var t = s('text', { x:x(i), y:H - 6, 'text-anchor':anchor }); t.textContent = lb; svg.appendChild(t);
+    });
+
+    series.slice().reverse().forEach(function (ser, idx) {
+      var main = idx === series.length - 1, d = '', pen = false, last = -1, complete = true;
+      ser.values.forEach(function (v, i) {
+        if (v === null) { pen = false; complete = false; return; }
+        d += (pen ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1); pen = true; last = i;
+      });
+      if (main && complete && n > 1) {
+        svg.appendChild(s('path', { d:d + 'L' + x(n - 1) + ' ' + y(0) + 'L' + x(0) + ' ' + y(0) + 'Z', fill:'var(--wash)' }));
+      }
+      svg.appendChild(s('path', { d:d, fill:'none', stroke:ser.color, 'stroke-width':2, 'stroke-linejoin':'round', 'stroke-linecap':'round' }));
+      ser.values.forEach(function (v, i) {
+        if (v === null || (n > 31 && i !== last)) return;
+        svg.appendChild(s('circle', { cx:x(i), cy:y(v), r:4, fill:ser.color, stroke:'var(--surface)', 'stroke-width':2 }));
+      });
+      if (main && last >= 0) {
+        var end = s('text', { x:Math.min(x(last), W - 4), y:y(ser.values[last]) - 10, 'text-anchor':last === n - 1 && n > 1 ? 'end' : 'middle', 'class':'val' });
+        end.textContent = fmt(ser.values[last]); svg.appendChild(end);
+      }
+    });
+
+    var cross = s('line', { y1:T, y2:T + ih, stroke:'var(--base)', visibility:'hidden' });
+    svg.appendChild(cross);
+    var current = -1;
+    function pick(i, cx, cy) {
+      current = i;
+      cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.setAttribute('visibility', 'visible');
+      showTip(cx, cy, longs[i], series.map(function (ser) {
+        return [ser.name, ser.values[i] === null ? '-' : fmt(ser.values[i])];
+      }));
+    }
+    function leave() { cross.setAttribute('visibility', 'hidden'); hideTip(); }
+    var hit = s('rect', { x:L - 8, y:T, width:iw + 16, height:ih, fill:'transparent' });
+    svg.appendChild(hit);
+    hit.addEventListener('pointermove', function (e) {
+      var r = svg.getBoundingClientRect(), px = (e.clientX - r.left) * W / r.width;
+      var i = n === 1 ? 0 : Math.max(0, Math.min(n - 1, Math.round((px - L) * (n - 1) / iw)));
+      pick(i, e.clientX, r.top + y(series[0].values[i] === null ? max / 2 : series[0].values[i]) * r.height / H);
+    });
+    hit.addEventListener('pointerleave', leave);
+    svg.addEventListener('keydown', function (e) {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      e.preventDefault();
+      var r = svg.getBoundingClientRect();
+      var i = Math.max(0, Math.min(n - 1, (current < 0 ? n : current) + (e.key === 'ArrowLeft' ? -1 : 1)));
+      pick(i, r.left + x(i) * r.width / W, r.top + T);
+    });
+    svg.addEventListener('blur', leave);
+    box.appendChild(svg);
+  }
+  function lineChart(labels, longs, series) {
+    var box = h('div', { 'class':'chart' }), width = 0;
+    function draw() {
+      if (!box.clientWidth || box.clientWidth === width) return;
+      width = box.clientWidth;
+      drawLine(box, labels, longs, series);
+    }
+    if (window.ResizeObserver) {
+      if (!observer) observer = new ResizeObserver(function (items) { items.forEach(function (i) { if (i.target.redraw) i.target.redraw(); }); });
+      box.redraw = draw;
+      observer.observe(box);
+    } else {
+      setTimeout(draw, 0);
+    }
+    return box;
+  }
+  function trendPanel(res, title) {
+    var unit = bucketUnit(period()), grouped = buckets(res.byDate, unit), keys = Object.keys(grouped).sort();
+    var unitName = unit === 'day' ? 'දිනපතා' : unit === 'week' ? 'සතිපතා' : 'මාසිකව';
+    return panel(title, unitName + ' සාමාන්‍ය ලකුණු', true, keys.length
+      ? lineChart(keys.map(function (k) { return bucketLabel(k, unit); }), keys.map(function (k) { return bucketLong(k, unit); }),
+          [{ name:'සාමාන්‍යය', color:'var(--s1)', values:keys.map(function (k) { return grouped[k].sum / grouped[k].n; }) }])
+      : emptyNote());
+  }
+  function barRow(name, value, onClick, head) {
+    var max = state.data.maxMark, has = value !== null;
+    var pct = has ? Math.max(0, Math.min(100, value / max * 100)) : 0;
+    return h('button', { type:'button', 'class':'bar' + (has ? '' : ' none'), on:{ click:onClick } },
+      h('span', { 'class':'nm' }, name),
+      h('span', { 'class':'tk' }, has ? h('span', { 'class':'fl', style:'width:' + pct + '%' }) : null),
+      h('span', { 'class':'v' }, has ? fmt(value) : '-'));
+  }
+  function levelCounts(rows) {
+    var counts = LEVELS.map(function () { return 0; }), none = 0;
+    rows.forEach(function (r) { if (r.level) counts[LEVELS.indexOf(r.level)] += 1; else none += 1; });
+    return { counts:counts, none:none, marked:rows.length - none };
+  }
+  function segments(info, heading, tall) {
+    return h('span', { 'class':'segs' + (tall ? ' tall' : '') }, LEVELS.map(function (lv, i) {
+      var c = info.counts[i];
+      if (!c) return null;
+      var share = c / info.marked;
+      return h('span', { tabindex:0, style:'flex:' + c + ' 1 0;background:' + lv.color + ';color:' + lv.ink,
+        'aria-label':lv.name + ' මට්ටමේ සිසුන් ' + c,
+        on:tipEvents(heading, [[lv.name, c + ' (' + Math.round(share * 100) + '%)']]) },
+        share >= 0.09 ? String(c) : null);
+    }));
+  }
+  function levelLegend() {
+    var max = state.data.maxMark, up = max;
+    return legend(LEVELS.map(function (lv) {
+      var low = lv.from * max, text = lv.name + ' ' + fmt(low) + ' - ' + fmt(up);
+      up = low;
+      return { name:text, color:lv.color };
+    }));
+  }
+
+  // ===== කොටස් =====
+  function panel(title, sub, wide) {
+    var el = h('section', { 'class':'panel' + (wide === 'third' ? ' third' : wide ? ' wide' : '') }, h('h2', {}, title), h('p', { 'class':'sub' }, sub));
+    for (var i = 3; i < arguments.length; i++) add(el, arguments[i]);
+    return el;
+  }
+  function emptyNote() {
+    return h('div', { 'class':'empty' }, h('p', {}, 'මෙම කාලයට ලකුණු ඇතුළත් කර නැහැ. වෙනත් කාලයක් තෝරන්න.'),
+      state.user ? h('button', { type:'button', on:{ click:function () { go('entry'); } } }, 'ලකුණු ඇතුළත් කරන්න') : null);
+  }
+  function openStudent(key) { state.student = key; state.view = 'student'; render(); window.scrollTo(0, 0); }
+  function chooseGrade(g) { state.grade = g; state.student = null; if (state.view === 'student') state.view = 'overview'; render(); }
+  function go(view) { state.view = view; state.expired = null; state.student = null; state.renameKey = null; state.confirmKey = null; state.tempPassword = null; render(); window.scrollTo(0, 0); }
+
+  function nameList(rows, value) {
+    return h('ol', { 'class':'names' }, rows.map(function (r, i) {
+      return h('li', {}, h('button', { type:'button', on:{ click:function () { openStudent(r.key); } } },
+        h('span', { 'class':'n' }, r.rank || i + 1),
+        h('span', { 'class':'who' }, r.name, state.grade === 'all' ? h('small', {}, 'ශ්‍රේණිය ' + r.grade) : null),
+        h('span', { 'class':'sc' }, value(r))));
+    }));
+  }
+
+  function renderSide() {
+    var side = clear(document.getElementById('side'));
+    add(side, h('div', { 'class':'brand' }, 'සිසු ලකුණු'));
+    navItems().forEach(function (item) {
+      var icon = s('svg', { viewBox:'0 0 24 24', 'aria-hidden':'true' });
+      icon.appendChild(s('path', { d:ICONS[item[0]] || ICONS.account }));
+      var active = state.view === item[0] || (state.view === 'student' && item[0] === 'ranking');
+      add(side, h('button', { type:'button', 'class':'nav' + (item[2] ? ' desk' : ''), 'aria-current':active ? 'page' : null,
+        on:{ click:function () { go(item[0]); } } }, icon, item[1]));
+    });
+    add(side, h('div', { 'class':'side-foot' },
+      state.user ? h('div', { 'class':'who-box' }, h('b', {}, state.user.name), roleText()) : null,
+      state.user && state.user.sheetUrl ? h('a', { href:state.user.sheetUrl, target:'_blank', rel:'noopener' }, 'Google Sheet එක විවෘත කරන්න') : null,
+      h('button', { type:'button', on:{ click:function () { load(true); } } }, 'දත්ත නැවත ලබාගන්න')));
+  }
+  function roleText() {
+    return state.user.role === 'admin' ? 'සියලු අවසර' : 'ශ්‍රේණිය ' + state.user.grade + ' පන්ති භාර ගුරු';
+  }
+
+  function renderBoard(res, prev) {
+    var board = clear(document.getElementById('board')), p = period();
+    var plain = { entry:'ලකුණු ඇතුළත් කිරීම', students:'සිසුන්', teachers:'ගුරුවරුන්', login:'ගුරු පිවිසුම', account:'මගේ ගිණුම' };
+    if (plain[state.view]) { add(board, h('h1', {}, plain[state.view])); return; }
+
+    var row = state.view === 'student' ? findRow(res) : null;
+    var title = row ? row.name : state.grade === 'all' ? 'සියලු ශ්‍රේණි' : 'ශ්‍රේණිය ' + state.grade;
+    var modes = [['week', 'සතිය'], ['month', 'මාසය'], ['year', 'අවුරුද්ද'], ['range', 'දින පරාසය']];
+    add(board, h('div', { 'class':'board-top' },
+      h('div', {},
+        row ? h('button', { type:'button', 'class':'back', on:{ click:function () { go('ranking'); } } }, '‹ ස්ථාන ලැයිස්තුවට') : null,
+        h('h1', {}, title)),
+      h('div', { 'class':'seg', role:'group', 'aria-label':'කාලය' }, modes.map(function (m) {
+        return h('button', { type:'button', 'aria-pressed':String(state.mode === m[0]), on:{ click:function () { setMode(m[0]); } } }, m[1]);
+      }))));
+
+    if (state.mode === 'range') {
+      add(board, h('div', { 'class':'period range' },
+        h('label', {}, 'සිට ', h('input', { type:'date', id:'from', value:state.from, max:state.data.today, on:{ change:setRange } })),
+        h('label', {}, 'දක්වා ', h('input', { type:'date', id:'to', value:state.to, max:state.data.today, on:{ change:setRange } }))));
+    } else {
+      var next = shifted(1), nextFrom = periodOf(state.mode, next.anchor || state.anchor).from;
+      add(board, h('div', { 'class':'period' },
+        h('button', { type:'button', 'class':'arrow', 'aria-label':'පෙර', on:{ click:function () { move(-1); } } }, '‹'),
+        h('span', { 'class':'period-label', 'aria-live':'polite' }, p.label),
+        h('button', { type:'button', 'class':'arrow', 'aria-label':'ඊළඟ', disabled:nextFrom > state.data.today, on:{ click:function () { move(1); } } }, '›')));
+    }
+
+    if (!row) {
+      add(board, h('div', { 'class':'ruler', role:'group', 'aria-label':'ශ්‍රේණිය' },
+        h('button', { type:'button', 'aria-pressed':String(state.grade === 'all'), on:{ click:function () { chooseGrade('all'); } } }, 'සියල්ල'),
+        state.data.grades.map(function (g) {
+          return h('button', { type:'button', 'aria-pressed':String(state.grade === g.grade), 'aria-label':'ශ්‍රේණිය ' + g.grade,
+            on:{ click:function () { chooseGrade(g.grade); } } }, String(g.grade));
+        })));
+    }
+
+    var avg = row ? row.avg : res.avg, prevAvg = row ? (findRow(prev) || {}).avg : prev.avg, change = null;
+    if (avg !== null && avg !== undefined && prevAvg !== null && prevAvg !== undefined) {
+      var diff = Math.round((avg - prevAvg) * 10) / 10;
+      change = diff === 0 ? p.prevName + ' සමානයි' : (diff > 0 ? '▲ +' : '▼ ') + fmt(diff) + ' ' + p.prevName + ' සාපේක්ෂව';
+    }
+    var hero = h('div', {},
+      h('div', { 'class':'hero-num' }, avg === null || avg === undefined ? '-' : fmt(avg), h('small', {}, ' / ' + state.data.maxMark)),
+      h('div', { 'class':'hero-cap' }, 'සාමාන්‍ය ලකුණු' + (change ? ', ' + change : '')));
+
+    var figs = [];
+    if (row) {
+      var place = ranked(res.rows, 'total').filter(function (r) { return r.key === row.key; })[0];
+      figs = [[row.total, 'මුළු ලකුණු'], [row.days, 'ලකුණු ලැබූ දින'], [place.rank ? place.rank + ' / ' + res.rows.length : '-', 'පන්තියේ ස්ථානය']];
+    } else {
+      var marked = res.rows.filter(function (r) { return r.days; }).length;
+      var best = ranked(res.rows, 'total')[0];
+      figs = [[marked + ' / ' + res.rows.length, 'ලකුණු ලැබූ සිසුන්'], [res.n, 'ඇතුළත් කළ ලකුණු'],
+              [best && best.days ? best.name : '-', 'ඉහළම සිසුවා']];
+    }
+    add(board, h('div', { 'class':'figures' }, hero, figs.map(function (f) {
+      return h('div', { 'class':'fig' }, h('b', {}, String(f[0])), h('span', {}, f[1]));
+    })));
+  }
+
+  function findRow(res) {
+    return res.rows.filter(function (r) { return r.key === state.student; })[0] || null;
+  }
+
+  function renderOverview(view, res) {
+    var p = period(), grid = h('div', { 'class':'grid' });
+    add(grid, trendPanel(res, 'ලකුණු වෙනස් වූ ආකාරය'));
+
+    if (state.grade === 'all') {
+      var classes = state.data.grades.map(function (g) {
+        var c = compute(g.grade, p); c.grade = g.grade; return c;
+      });
+      add(grid, panel('ශ්‍රේණි සංසන්දනය', 'එක් එක් ශ්‍රේණියේ සාමාන්‍ය ලකුණු. ශ්‍රේණියක් ක්ලික් කර විස්තර බලන්න.', false,
+        h('div', { 'class':'bars' }, classes.map(function (c) {
+          return barRow('ශ්‍රේණිය ' + c.grade, c.avg, function () { chooseGrade(c.grade); });
+        }))));
+      add(grid, panel('ශ්‍රේණි අනුව ලකුණු මට්ටම්', 'එක් එක් මට්ටමේ සිසුන් ගණන', false, levelLegend(),
+        classes.map(function (c) {
+          var info = levelCounts(c.rows), head = 'ශ්‍රේණිය ' + c.grade;
+          return h('button', { type:'button', 'class':'stack', on:{ click:function () { chooseGrade(c.grade); } } },
+            h('span', {}, head),
+            info.marked ? segments(info, head) : h('span', { 'class':'nomark' }, 'ලකුණු නැහැ'));
+        })));
+    } else {
+      var rows = ranked(res.rows, 'avg');
+      add(grid, panel('සිසුන්ගේ ලකුණු මට්ටම්', 'සාමාන්‍ය ලකුණු අනුව. නමක් ක්ලික් කර සිසුවාගේ විස්තර බලන්න.', true,
+        h('div', { 'class':'bars' + (rows.length > 14 ? ' two' : ''), style:rows.length > 14 ? 'grid-template-rows:repeat(' + Math.ceil(rows.length / 2) + ',auto)' : null }, rows.map(function (r) {
+          return barRow(r.name, r.avg, function () { openStudent(r.key); });
+        }))));
+      var info = levelCounts(res.rows), noneText = info.none ? info.none + ' දෙනෙකුට මෙම කාලයේ ලකුණු නැහැ.' : null;
+      add(grid, panel('පන්තියේ ලකුණු මට්ටම්', 'එක් එක් මට්ටමේ සිසුන් ගණන', 'third', levelLegend(),
+        info.marked ? segments(info, 'ශ්‍රේණිය ' + state.grade, true) : h('p', { 'class':'nomark' }, 'ලකුණු නැහැ'),
+        noneText ? h('p', { 'class':'note' }, noneText) : null));
+    }
+
+    var withMarks = ranked(res.rows, 'total').filter(function (r) { return r.days; });
+    add(grid, panel('ඉහළම සිසුන්', 'මුළු ලකුණු අනුව', state.grade === 'all' ? false : 'third',
+      withMarks.length ? nameList(withMarks.slice(0, 5), function (r) { return r.total; }) : h('p', { 'class':'nomark' }, 'ලකුණු නැහැ'),
+      withMarks.length ? h('button', { type:'button', 'class':'link', on:{ click:function () { go('ranking'); } } }, 'සියලු සිසුන් බලන්න') : null));
+
+    var low = res.rows.filter(function (r) { return r.level === LEVELS[LEVELS.length - 1]; })
+      .sort(function (a, b) { return a.avg - b.avg; });
+    add(grid, panel('අවධානය අවශ්‍ය සිසුන්', 'අඩු මට්ටමේ සිසුන්, අඩුම සාමාන්‍යය මුලින්', state.grade === 'all' ? false : 'third',
+      low.length ? nameList(low.slice(0, 5).map(function (r) { r.rank = null; return r; }), function (r) { return fmt(r.avg); })
+                 : h('p', { 'class':'nomark' }, res.n ? 'මෙම කාලයේ අඩු මට්ටමේ සිසුන් නැහැ.' : 'ලකුණු නැහැ')));
+    add(view, grid);
+  }
+
+  function renderRanking(view, res) {
+    var body = h('tbody', {});
+    function fill() {
+      clear(body);
+      var q = state.search.trim().toLowerCase();
+      ranked(res.rows, state.sort).filter(function (r) {
+        return !q || r.name.toLowerCase().indexOf(q) !== -1 || String(r.no) === q || (r.grade + '_' + r.no) === q;
+      }).forEach(function (r) {
+        add(body, h('tr', {},
+          h('td', { 'class':'num' }, r.rank || '-'),
+          h('td', {}, h('button', { type:'button', on:{ click:function () { openStudent(r.key); } } }, r.name)),
+          h('td', { 'class':'num' }, r.grade),
+          h('td', { 'class':'num' }, r.total),
+          h('td', { 'class':'num hide-sm' }, r.days),
+          h('td', { 'class':'num' }, r.avg === null ? '-' : fmt(r.avg)),
+          h('td', { 'class':'lv hide-sm' }, r.level ? [h('i', { style:'background:' + r.level.color }), r.level.name] : '-')));
+      });
+      if (!body.firstChild) add(body, h('tr', {}, h('td', { colspan:7 }, 'ගැළපෙන සිසුන් නැහැ.')));
+    }
+    fill();
+    add(view, h('section', { 'class':'panel wide' },
+      h('div', { 'class':'tools' },
+        h('input', { type:'search', 'aria-label':'සිසුවෙකු සොයන්න', placeholder:'නම හෝ අංකය අනුව සොයන්න', value:state.search,
+          on:{ input:function (e) { state.search = e.target.value; fill(); } } }),
+        h('label', {}, 'පෙළගැස්ම ',
+          h('select', { on:{ change:function (e) { state.sort = e.target.value; fill(); } } },
+            h('option', { value:'total', selected:state.sort === 'total' }, 'මුළු ලකුණු'),
+            h('option', { value:'avg', selected:state.sort === 'avg' }, 'සාමාන්‍යය')))),
+      h('div', { 'class':'scroll' }, h('table', {},
+        h('thead', {}, h('tr', {},
+          h('th', { 'class':'num' }, 'ස්ථානය'), h('th', {}, 'නම'), h('th', { 'class':'num' }, 'ශ්‍රේණිය'),
+          h('th', { 'class':'num' }, 'මුළු'), h('th', { 'class':'num hide-sm' }, 'දින'),
+          h('th', { 'class':'num' }, 'සාමාන්‍යය'), h('th', { 'class':'hide-sm' }, 'මට්ටම'))),
+        body))));
+  }
+
+  function renderRegister(view, res) {
+    if (state.grade === 'all') {
+      add(view, h('section', { 'class':'panel wide' }, h('p', { 'class':'empty' }, 'ලකුණු පොත බැලීමට ඉහළින් ශ්‍රේණියක් තෝරන්න.')));
+      return;
+    }
+    var dates = Object.keys(res.byDate).sort();
+    if (!dates.length) { add(view, h('section', { 'class':'panel wide' }, emptyNote())); return; }
+    var lookup = {};
+    res.rows.forEach(function (r) { lookup[r.key] = {}; r.marks.forEach(function (m) { lookup[r.key][m[0]] = m[1]; }); });
+    add(view, h('section', { 'class':'panel wide' },
+      h('div', { 'class':'scroll' }, h('table', { 'class':'reg' },
+        h('thead', {}, h('tr', {}, h('th', {}, 'අංකය'), h('th', { 'class':'st' }, 'සිසුවාගේ නම'),
+          dates.map(function (d) { return h('th', {}, dots(d)); }), h('th', {}, 'මුළු'))),
+        h('tbody', {}, res.rows.map(function (r) {
+          return h('tr', {}, h('td', { 'class':'num' }, r.no),
+            h('td', { 'class':'st' }, h('button', { type:'button', on:{ click:function () { openStudent(r.key); } } }, r.name)),
+            dates.map(function (d) { var v = lookup[r.key][d]; return h('td', { 'class':'num' }, v === undefined ? '' : v); }),
+            h('td', { 'class':'num' }, h('b', {}, r.total)));
+        }))))));
+  }
+
+  function renderStudent(view, res) {
+    var row = findRow(res);
+    if (!row) { go('ranking'); return; }
+    var unit = bucketUnit(period()), classGrouped = buckets(res.byDate, unit), keys = Object.keys(classGrouped).sort();
+    var own = {}; row.marks.forEach(function (m) { own[m[0]] = { sum:m[1], n:1 }; });
+    var ownGrouped = buckets(own, unit), grid = h('div', { 'class':'grid' });
+    var series = [
+      { name:row.name, color:'var(--s1)', values:keys.map(function (k) { return ownGrouped[k] ? ownGrouped[k].sum / ownGrouped[k].n : null; }) },
+      { name:'පන්තියේ සාමාන්‍යය', color:'var(--s2)', values:keys.map(function (k) { return classGrouped[k].sum / classGrouped[k].n; }) }
+    ];
+    add(grid, panel('ලකුණු වෙනස් වූ ආකාරය', 'සිසුවාගේ ලකුණු සහ පන්තියේ සාමාන්‍යය', true,
+      keys.length ? [legend([{ name:series[0].name, color:series[0].color, line:true }, { name:series[1].name, color:series[1].color, line:true }]),
+                     lineChart(keys.map(function (k) { return bucketLabel(k, unit); }), keys.map(function (k) { return bucketLong(k, unit); }), series)]
+                  : emptyNote()));
+    add(grid, panel('දිනපතා ලකුණු', row.level ? 'ලකුණු මට්ටම: ' + row.level.name : 'මෙම කාලයට ලකුණු නැහැ', true,
+      row.marks.length ? h('div', { 'class':'scroll' }, h('table', {}, h('thead', {}, h('tr', {}, h('th', {}, 'දිනය'), h('th', { 'class':'num' }, 'ලකුණු'))),
+        h('tbody', {}, row.marks.slice().reverse().map(function (m) { return h('tr', {}, h('td', {}, dots(m[0])), h('td', { 'class':'num' }, m[1])); })))) : null));
+    add(view, grid);
+  }
+
+  // ===== ලකුණු ඇතුළත් කිරීම =====
+  function renderEntry(view) {
+    var d = state.data, allowed = allowedGrades();
+    if (!entry.date) entry.date = d.today;
+    if (allowed.length === 1) entry.grade = String(allowed[0]);
+    var els = {
+      grade:h('select', { id:'grade', required:true, disabled:allowed.length === 1 }, h('option', { value:'' }, 'තෝරන්න'),
+        allowed.map(function (g) { return h('option', { value:g, selected:String(g) === entry.grade }, 'ශ්‍රේණිය ' + g); })),
+      number:h('input', { id:'number', autocomplete:'off', required:true, placeholder:'උදා: 1', value:entry.number }),
+      numberNote:h('div', { 'class':'warn', id:'numberNote' }),
+      name:h('input', { id:'name', readonly:true, tabindex:-1 }),
+      date:h('input', { id:'date', type:'date', required:true, max:d.today, value:entry.date }),
+      mark:h('input', { id:'mark', type:'number', inputmode:'decimal', min:0, max:d.maxMark, step:'any', required:true, placeholder:'0 - ' + d.maxMark, value:entry.mark }),
+      markNote:h('div', { 'class':'warn', id:'markNote' }),
+      save:h('button', { id:'save', 'class':'save', type:'submit', disabled:true }, 'Save කරන්න'),
+      status:h('div', { id:'status', role:'status', 'class':entry.statusKind }, entry.status)
+    };
+    var current = null;
+
+    function setStatus(text, kind) {
+      entry.status = text || ''; entry.statusKind = kind || '';
+      els.status.textContent = entry.status; els.status.className = entry.statusKind;
+    }
+    function lookup() {
+      var raw = els.number.value.trim(), number = raw, m = /^([0-9]+)_([0-9]+)$/.exec(raw);
+      entry.grade = els.grade.value; entry.number = els.number.value; entry.date = els.date.value;
+      current = null; els.name.value = ''; els.markNote.textContent = ''; els.numberNote.textContent = '';
+      if (raw && !els.grade.value) {
+        els.numberNote.textContent = 'මුලින් ශ්‍රේණිය තෝරන්න.';
+      } else if (raw && m && m[1] !== els.grade.value) {
+        els.numberNote.textContent = 'මෙම අංකය තෝරාගත් ශ්‍රේණියට අයත් නැහැ.';
+      } else if (raw) {
+        if (m) number = m[2];
+        var g = selectedGrades(Number(els.grade.value))[0];
+        current = g.students.filter(function (st) { return st.no === number; })[0] || null;
+        if (current) {
+          els.name.value = current.name;
+          var old = current.m[els.date.value];
+          if (old !== undefined) els.markNote.textContent = 'මෙම දිනයට දැනටමත් ලකුණු ' + old + ' ඇත. Save කළොත් නව ලකුණු ඒ වෙනුවට යෙදේ.';
+        } else {
+          els.numberNote.textContent = 'මෙම අංකයේ සිසුවෙක් නැහැ.';
+        }
+      }
+      els.save.disabled = !current || entry.saving;
+    }
+    els.grade.addEventListener('change', function () { setStatus(''); lookup(); els.number.focus(); });
+    els.date.addEventListener('change', function () { setStatus(''); lookup(); });
+    els.mark.addEventListener('input', function () { entry.mark = els.mark.value; });
+    els.number.addEventListener('input', function () {
+      var m = /^([0-9]+)_[0-9]+$/.exec(els.number.value.trim());
+      setStatus('');
+      if (m && !els.grade.value && els.grade.querySelector('option[value="' + m[1] + '"]')) els.grade.value = m[1];
+      lookup();
+    });
+    add(view, h('section', { 'class':'panel wide' }, h('form', { 'class':'entry', autocomplete:'off', on:{ submit:function (e) {
+      e.preventDefault();
+      if (!current || entry.saving) return;
+      var student = current, grade = els.grade.value, date = els.date.value;
+      entry.saving = true; els.save.disabled = true; setStatus('Save වෙමින්...');
+      api('saveMark', [state.token, { grade:grade, no:student.no, date:date, mark:els.mark.value }], function (r) {
+        entry.saving = false;
+        student.m[date] = r.mark;
+        var text = r.name + ' - ' + r.date + ' - ලකුණු ' + r.mark;
+        if (r.previous !== null && r.previous !== r.mark) text += ' (පෙර ලකුණු ' + r.previous + ' වෙනස් කළා)';
+        setStatus(text + ' ✓', 'ok');
+        els.number.value = ''; els.mark.value = ''; entry.mark = '';
+        lookup(); els.number.focus();
+      }, function (err) { entry.saving = false; setStatus(err.message, 'err'); lookup(); });
+    } } },
+      h('div', { 'class':'field' }, h('label', { 'for':'grade' }, 'ශ්‍රේණිය'), els.grade),
+      h('div', { 'class':'field' }, h('label', { 'for':'number' }, 'සිසුවාගේ අංකය'), els.number, els.numberNote),
+      h('div', { 'class':'field' }, h('label', { 'for':'name' }, 'සිසුවාගේ නම'), els.name),
+      h('div', { 'class':'field' }, h('label', { 'for':'date' }, 'දිනය'), els.date),
+      h('div', { 'class':'field' }, h('label', { 'for':'mark' }, 'ලකුණු'), els.mark, els.markNote),
+      els.save, els.status)));
+    lookup();
+  }
+
+  // ===== පිවිසුම සහ ගිණුම =====
+  function field(id, label, control) {
+    control.id = id;
+    return h('div', { 'class':'field' }, h('label', { 'for':id }, label), control);
+  }
+  function renderLogin(view) {
+    if (state.expired) { renderExpired(view); return; }
+    var user = h('input', { autocomplete:'username', required:true, autocapitalize:'none', spellcheck:'false' });
+    var pass = h('input', { type:'password', autocomplete:'current-password', required:true });
+    var button = h('button', { 'class':'save', type:'submit' }, 'පිවිසෙන්න');
+    add(view, h('section', { 'class':'panel wide' }, h('form', { 'class':'entry', on:{ submit:function (e) {
+      e.preventDefault();
+      button.disabled = true;
+      api('login', [user.value, pass.value], function (r) {
+        if (r.expired) { state.expired = { username:user.value, password:pass.value }; render(); return; }
+        signedIn(r);
+      }, function (err) { state.notice = { text:err.message, kind:'err' }; render(); });
+    } } }, noticeBox(),
+      h('p', { 'class':'sub' }, 'මෙම පිවිසුම ගුරුවරුන්ට පමණයි. ලකුණු බැලීමට පිවිසීම අවශ්‍ය නැහැ.'),
+      field('user', 'පරිශීලක නාමය', user), field('pass', 'මුරපදය', pass), button)));
+  }
+  function signedIn(r) {
+    state.token = r.token; state.user = r.user; rememberSession(r.token);
+    go('overview');
+  }
+  function renderExpired(view) {
+    var next = h('input', { type:'password', autocomplete:'new-password', required:true, minlength:6 });
+    var again = h('input', { type:'password', autocomplete:'new-password', required:true, minlength:6 });
+    add(view, h('section', { 'class':'panel wide' }, h('form', { 'class':'entry', on:{ submit:function (e) {
+      e.preventDefault();
+      if (next.value !== again.value) { state.notice = { text:'මුරපද දෙක සමාන නැහැ.', kind:'err' }; render(); return; }
+      var info = state.expired;
+      api('renewPassword', [info.username, info.password, next.value], function (r) {
+        state.expired = null;
+        signedIn(r);
+      }, function (err) { state.notice = { text:err.message, kind:'err' }; render(); });
+    } } }, noticeBox(),
+      h('p', { 'class':'sub' }, 'ඔබේ මුරපදය දින 30කින් කල් ඉකුත් වී ඇත. ඉදිරියට යාමට අලුත් මුරපදයක් සකසන්න.'),
+      field('next', 'අලුත් මුරපදය', next), field('again', 'අලුත් මුරපදය නැවත', again),
+      h('button', { 'class':'save', type:'submit' }, 'මුරපදය සකසා පිවිසෙන්න'),
+      h('button', { 'class':'link', type:'button', on:{ click:function () { state.expired = null; render(); } } }, 'ආපසු'))));
+  }
+  function signOut() {
+    var token = state.token;
+    forgetSession();
+    api('logout', [token], function () {});
+    go('overview');
+  }
+  function renderAccount(view) {
+    var current = h('input', { type:'password', autocomplete:'current-password', required:true });
+    var next = h('input', { type:'password', autocomplete:'new-password', required:true, minlength:6 });
+    var box = h('section', { 'class':'panel' }, h('h2', {}, state.user.name), h('p', { 'class':'sub' }, roleText() + ', පරිශීලක නාමය ' + state.user.username),
+      h('div', { 'class':'stack-list' },
+        h('button', { type:'button', on:{ click:function () { go('students'); } } }, 'සිසුන්'),
+        isAdmin() ? h('button', { type:'button', on:{ click:function () { go('teachers'); } } }, 'ගුරුවරුන්') : null,
+        state.user.sheetUrl ? h('a', { href:state.user.sheetUrl, target:'_blank', rel:'noopener' }, 'Google Sheet එක විවෘත කරන්න') : null,
+        h('button', { type:'button', on:{ click:signOut } }, 'පිටවෙන්න')));
+    var form = h('section', { 'class':'panel' }, h('h2', {}, 'මුරපදය වෙනස් කරන්න'), h('p', { 'class':'sub' }, 'මුරපදය තව දින ' + state.user.passwordDays + 'කින් කල් ඉකුත් වේ. අවම අකුරු 6ක්. වෙනස් කළ පසු නැවත පිවිසිය යුතුයි.'),
+      noticeBox(),
+      h('form', { 'class':'form-narrow', on:{ submit:function (e) {
+        e.preventDefault();
+        api('changePassword', [state.token, current.value, next.value], function () {
+          forgetSession();
+          state.notice = { text:'මුරපදය වෙනස් කළා. අලුත් මුරපදයෙන් පිවිසෙන්න.', kind:'ok' };
+          go('login');
+        });
+      } } }, field('current', 'දැනට ඇති මුරපදය', current), field('next', 'අලුත් මුරපදය', next),
+        h('button', { 'class':'primary', type:'submit' }, 'මුරපදය වෙනස් කරන්න')));
+    add(view, h('div', { 'class':'grid' }, box, form));
+  }
+
+  // ===== සිසුන් =====
+  function afterChange(text) {
+    state.notice = { text:text, kind:'ok' };
+    state.renameKey = null; state.confirmKey = null;
+    render();
+  }
+  /** Sheet එකේ වෙනස් වූ නිසා ක්‍රියාව අසාර්ථක වුවහොත් ලැයිස්තුවද අලුත් කරයි. */
+  function failAndRefresh(err) {
+    state.notice = { text:err.message, kind:'err' };
+    state.renameKey = null; state.confirmKey = null;
+    load(true);
+  }
+  function renderStudents(view) {
+    var allowed = allowedGrades();
+    if (allowed.indexOf(state.manageGrade) === -1) state.manageGrade = allowed[0];
+    var grade = state.manageGrade;
+    var list = selectedGrades(grade)[0].students;
+    var name = h('input', { required:true, maxlength:80 });
+    var panelEl = h('section', { 'class':'panel wide' }, h('h2', {}, 'ශ්‍රේණිය ' + grade + ' සිසුන්'),
+      h('p', { 'class':'sub' }, 'සිසුන් ' + list.length + ' දෙනෙක්'), noticeBox());
+    if (allowed.length > 1) {
+      add(panelEl, h('div', { 'class':'tools' }, h('label', {}, 'ශ්‍රේණිය ',
+        h('select', { id:'manageGrade', on:{ change:function (e) { state.manageGrade = Number(e.target.value); state.renameKey = null; state.confirmKey = null; render(); } } },
+          allowed.map(function (g) { return h('option', { value:g, selected:g === grade }, 'ශ්‍රේණිය ' + g); })))));
+    }
+    add(panelEl, h('form', { 'class':'inline', style:'margin-bottom:18px', on:{ submit:function (e) {
+      e.preventDefault();
+      api('addStudent', [state.token, { grade:grade, name:name.value }], function (r) {
+        list.push({ no:r.no, name:r.name, m:{}, marks:[] });
+        afterChange(r.name + ' ශ්‍රේණිය ' + grade + ', අංක ' + r.no + ' ලෙස එක් කළා.');
+      });
+    } } }, field('newName', 'අලුත් සිසුවාගේ නම', name), h('button', { 'class':'primary', type:'submit' }, 'සිසුවා එක් කරන්න')));
+
+    add(panelEl, h('div', { 'class':'scroll' }, h('table', { 'class':'stu' },
+      h('thead', {}, h('tr', {}, h('th', {}, 'අංකය'), h('th', {}, 'නම'), h('th', {}, ''))),
+      h('tbody', {}, list.map(function (st) {
+        var key = grade + '_' + st.no, cell, acts;
+        if (state.renameKey === key) {
+          var input = h('input', { 'class':'edit-name', value:st.name, maxlength:80, 'aria-label':'අලුත් නම' });
+          cell = input;
+          acts = [h('button', { type:'button', on:{ click:function () {
+            api('renameStudent', [state.token, { grade:grade, no:st.no, name:input.value }], function (r) { st.name = r.name; afterChange('නම වෙනස් කළා.'); }, failAndRefresh);
+          } } }, 'Save කරන්න'), h('button', { type:'button', on:{ click:function () { state.renameKey = null; render(); } } }, 'අවලංගු කරන්න')];
+        } else if (state.confirmKey === key) {
+          cell = st.name + ' ඉවත් කරන්නද?';
+          acts = [h('button', { type:'button', 'class':'danger', on:{ click:function () {
+            api('removeStudent', [state.token, { grade:grade, no:st.no }], function () { list.splice(list.indexOf(st), 1); afterChange(st.name + ' ඉවත් කළා.'); }, failAndRefresh);
+          } } }, 'ඔව්, ඉවත් කරන්න'), h('button', { type:'button', on:{ click:function () { state.confirmKey = null; render(); } } }, 'එපා')];
+        } else {
+          cell = st.name;
+          acts = [h('button', { type:'button', on:{ click:function () { state.renameKey = key; state.confirmKey = null; render(); } } }, 'නම වෙනස් කරන්න'),
+                  h('button', { type:'button', 'class':'danger', on:{ click:function () { state.confirmKey = key; state.renameKey = null; render(); } } }, 'ඉවත් කරන්න')];
+        }
+        return h('tr', {}, h('td', {}, st.no), h('td', {}, cell), h('td', {}, h('div', { 'class':'acts' }, acts)));
+      })))));
+    add(view, panelEl);
+  }
+
+  // ===== ගුරුවරුන් =====
+  function renderTeachers(view) {
+    var holder = h('div', { 'class':'grid' });
+    add(view, holder);
+    var username = h('input', { required:true, autocapitalize:'none', spellcheck:'false', placeholder:'උදා: nimali', pattern:'[A-Za-z0-9._-]{3,30}' });
+    var name = h('input', { required:true, maxlength:80 });
+    var grade = h('select', { required:true }, state.data.grades.map(function (g) { return h('option', { value:g.grade }, 'ශ්‍රේණිය ' + g.grade); }));
+    function showTemp(who, password) {
+      state.tempPassword = { who:who, password:password };
+      render();
+    }
+    var top = h('section', { 'class':'panel wide' }, h('h2', {}, 'ගුරුවරයෙකු එක් කරන්න'),
+      h('p', { 'class':'sub' }, 'පන්තිය තෝරා එක් කළ විට ඒ ගුරුවරයාට එම පන්තිය පමණක් වෙනස් කළ හැකියි.'), noticeBox(),
+      state.tempPassword ? h('div', { 'class':'notice' }, state.tempPassword.who + ' සඳහා තාවකාලික මුරපදය. මෙය පෙන්වන්නේ එක් වරක් පමණයි.',
+        h('b', { 'class':'temp', id:'tempPassword' }, state.tempPassword.password)) : null,
+      h('form', { 'class':'inline', on:{ submit:function (e) {
+        e.preventDefault();
+        var who = username.value.trim().toLowerCase();
+        api('addTeacher', [state.token, { username:who, name:name.value, grade:grade.value }], function (r) { showTemp(who, r.password); });
+      } } }, field('tUser', 'පරිශීලක නාමය', username), field('tName', 'ගුරුවරයාගේ නම', name), field('tGrade', 'පන්තිය', grade),
+        h('button', { 'class':'primary', type:'submit' }, 'ගුරුවරයා එක් කරන්න')));
+    add(holder, top);
+    var tablePanel = h('section', { 'class':'panel wide' }, h('h2', {}, 'ගුරුවරුන්'), h('p', { 'class':'muted' }, 'ලබාගනිමින්...'));
+    var removedPanel = h('section', { 'class':'panel wide' }, h('h2', {}, 'ඉවත් කළ සිසුන්'), h('p', { 'class':'sub' }, 'නැවත එක් කළ විට ලකුණුද නැවත පෙනේ.'));
+    add(holder, tablePanel); add(holder, removedPanel);
+
+    api('listTeachers', [state.token], function (teachers) {
+      clear(tablePanel);
+      add(tablePanel, h('h2', {}, 'ගුරුවරුන්'), h('p', { 'class':'sub' }, teachers.length + ' දෙනෙක්'));
+      if (!teachers.length) { add(tablePanel, h('p', { 'class':'muted' }, 'තවම ගුරුවරුන් එක් කර නැහැ.')); return; }
+      function update(change) {
+        api('updateTeacher', [state.token, change], function () { state.notice = { text:'අවසර යාවත්කාලීන කළා.', kind:'ok' }; render(); });
+      }
+      add(tablePanel, h('div', { 'class':'scroll' }, h('table', { 'class':'cards' },
+        h('thead', {}, h('tr', {}, h('th', {}, 'නම'), h('th', {}, 'පරිශීලක නාමය'), h('th', {}, 'පන්තිය'), h('th', {}, 'තත්ත්වය'), h('th', {}, ''))),
+        h('tbody', {}, teachers.map(function (t) {
+          var key = 'teacher:' + t.username;
+          var acts = state.confirmKey === key
+            ? [h('button', { type:'button', 'class':'danger', on:{ click:function () {
+                 api('removeTeacher', [state.token, t.username], function () { state.confirmKey = null; state.notice = { text:t.name + ' ඉවත් කළා.', kind:'ok' }; render(); });
+               } } }, 'ඔව්, ඉවත් කරන්න'), h('button', { type:'button', on:{ click:function () { state.confirmKey = null; render(); } } }, 'එපා')]
+            : [h('button', { type:'button', on:{ click:function () { update({ username:t.username, active:!t.active }); } } }, t.active ? 'අවසර නවත්වන්න' : 'අවසර දෙන්න'),
+               h('button', { type:'button', on:{ click:function () {
+                 api('resetTeacherPassword', [state.token, t.username], function (r) { showTemp(t.username, r.password); });
+               } } }, 'මුරපදය නැවත සකසන්න'),
+               h('button', { type:'button', 'class':'danger', on:{ click:function () { state.confirmKey = key; render(); } } }, 'ඉවත් කරන්න')];
+          return h('tr', {}, h('td', {}, t.name), h('td', {}, t.username),
+            h('td', {}, h('select', { 'aria-label':t.name + ' පන්තිය', on:{ change:function (e) { update({ username:t.username, grade:e.target.value }); } } },
+              state.data.grades.map(function (g) { return h('option', { value:g.grade, selected:g.grade === t.grade }, 'ශ්‍රේණිය ' + g.grade); }))),
+            h('td', {}, t.active ? 'සක්‍රිය' : 'නවතා ඇත'), h('td', {}, h('div', { 'class':'acts' }, acts)));
+        })))));
+    });
+    api('listRemovedStudents', [state.token], function (rows) {
+      if (!rows.length) { add(removedPanel, h('p', { 'class':'muted' }, 'ඉවත් කළ සිසුන් නැහැ.')); return; }
+      add(removedPanel, h('div', { 'class':'scroll' }, h('table', {},
+        h('thead', {}, h('tr', {}, h('th', {}, 'නම'), h('th', { 'class':'num' }, 'ශ්‍රේණිය'), h('th', { 'class':'num' }, 'අංකය'), h('th', {}, 'ඉවත් කළේ'), h('th', {}, ''))),
+        h('tbody', {}, rows.map(function (r) {
+          return h('tr', {}, h('td', {}, r.name), h('td', { 'class':'num' }, r.grade), h('td', { 'class':'num' }, r.no), h('td', {}, r.by + ', ' + r.when),
+            h('td', {}, h('div', { 'class':'acts' }, h('button', { type:'button', on:{ click:function () {
+              api('restoreStudent', [state.token, r.id], function () { state.notice = { text:r.name + ' නැවත එක් කළා.', kind:'ok' }; load(true); });
+            } } }, 'නැවත එක් කරන්න'))));
+        })))));
+    });
+  }
+
+  // ===== පාලනය =====
+  function setMode(mode) {
+    if (mode === state.mode) return;
+    var p = period();
+    if (mode === 'range') {
+      state.from = p.from > state.data.today ? state.data.today : p.from;
+      state.to = p.to > state.data.today ? state.data.today : p.to;
+    } else if (p.from <= state.data.today && state.data.today <= p.to) {
+      state.anchor = state.data.today;
+    } else {
+      state.anchor = state.mode === 'range' ? state.to : state.anchor;
+    }
+    state.mode = mode;
+    render();
+  }
+  function setRange() {
+    var a = document.getElementById('from').value, b = document.getElementById('to').value;
+    if (!a || !b) return;
+    state.from = a < b ? a : b; state.to = a < b ? b : a;
+    render();
+  }
+  function move(dir) {
+    var v = shifted(dir);
+    if (v.anchor) state.anchor = v.anchor; else { state.from = v.from; state.to = v.to; }
+    render();
+  }
+  function render() {
+    hideTip();
+    if (observer) observer.disconnect();
+    var view = clear(document.getElementById('view'));
+    if (!state.user && ['entry', 'students', 'teachers', 'account'].indexOf(state.view) !== -1) state.view = 'login';
+    if (state.view === 'teachers' && !isAdmin()) state.view = 'overview';
+    if (state.view === 'login' && state.user) state.view = 'overview';
+    renderSide();
+    var which = state.grade;
+    if (state.view === 'student') which = Number(state.student.split('_')[0]);
+    var res = compute(which, period()), prev = compute(which, previousPeriod());
+    renderBoard(res, prev);
+    if (state.view === 'overview') renderOverview(view, res);
+    else if (state.view === 'ranking') renderRanking(view, res);
+    else if (state.view === 'register') renderRegister(view, res);
+    else if (state.view === 'student') renderStudent(view, res);
+    else if (state.view === 'login') renderLogin(view);
+    else if (state.view === 'account') renderAccount(view);
+    else if (state.view === 'students') renderStudents(view);
+    else if (state.view === 'teachers') renderTeachers(view);
+    else renderEntry(view);
+  }
+  function load(fresh) {
+    var view = document.getElementById('view');
+    view.style.opacity = state.data ? '.55' : '';
+    api(fresh && state.token ? 'getFreshData' : 'getDashboardData', fresh && state.token ? [state.token] : [], function (data) {
+        data.grades.forEach(function (g) {
+          g.students.forEach(function (st) {
+            st.m = {};
+            st.marks.forEach(function (v, i) { if (v !== null) st.m[g.dates[i]] = v; });
+          });
+        });
+        state.data = data;
+        if (!state.anchor) state.anchor = data.today;
+        view.style.opacity = '';
+        render();
+      }, function (err) {
+        view.style.opacity = '';
+        clear(view);
+        add(view, h('div', { id:'splash' }, h('p', {}, err.message),
+          h('button', { type:'button', 'class':'primary', on:{ click:function () { load(true); } } }, 'නැවත උත්සාහ කරන්න')));
+      });
+  }
+  (function start() {
+    if (!/^https:[/][/]script[.]google[.]com[/]macros[/]s[/].+[/]exec$/.test(window.API_URL || '')) {
+      document.getElementById('splash').textContent = 'config.js ගොනුවේ Web app URL එක නිවැරදි නැහැ.';
+      return;
+    }
+    var token = savedToken();
+    if (!token) { load(); return; }
+    api('whoAmI', [token], function (user) {
+      if (user) { state.token = token; state.user = user; } else { forgetSession(); }
+      load();
+    }, function () { forgetSession(); load(); });
+  })();
+</script>
+</body>
+</html>
