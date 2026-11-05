@@ -255,8 +255,8 @@
   }
   var state = { view:'overview', grade:'all', mode:'month', anchor:'', from:'', to:'', student:null,
                 sort:'total', search:'', data:null, user:null, token:null, notice:null,
-                manageGrade:null, expired:null, renameKey:null, confirmKey:null, tempPassword:null };
-  var entry = { grade:'', number:'', date:'', mark:'', saving:false, status:'', statusKind:'' };
+                manageGrade:null, expired:null, pending:null, renameKey:null, confirmKey:null, tempPassword:null };
+  var entry = { grade:'', number:'', date:'', mark:'', status:'', statusKind:'', queue:[], sending:[], failed:[], lastSaved:'' };
   var observer = null;
   var SESSION_ERROR = 'පිවිසුම කල් ඉකුත් වී ඇත. නැවත පිවිසෙන්න.';
 
@@ -266,7 +266,7 @@
     function failed(err) {
       if (err.message === SESSION_ERROR) {
         forgetSession();
-        state.notice = { text:SESSION_ERROR, kind:'err' };
+        state.notice = { text:SESSION_ERROR + queueLostText(), kind:'err' };
         state.view = 'login';
         if (state.data) render(); else load();
       } else if (fail) {
@@ -816,6 +816,66 @@
     add(view, grid);
   }
 
+  // ===== ලකුණු Save පෝලිම =====
+  function waitingCount() { return entry.queue.length + entry.sending.length; }
+  function showQueue() {
+    var waiting = waitingCount();
+    var el = document.getElementById('status');
+    if (entry.failed.length) {
+      entry.status = 'Save නොවූ ලකුණු: ' + entry.failed.join(', ') + '. මේවා නැවත ඇතුළත් කරන්න.';
+      entry.statusKind = 'err';
+    } else if (waiting) {
+      entry.status = 'Save වෙමින්: ලකුණු ' + waiting;
+      entry.statusKind = '';
+    } else {
+      entry.status = entry.lastSaved ? 'සියල්ල Save වුණා ✓ ' + entry.lastSaved : '';
+      entry.statusKind = entry.lastSaved ? 'ok' : '';
+    }
+    if (el) { el.textContent = entry.status; el.className = entry.statusKind; }
+  }
+  function revertItem(item, reason) {
+    if (item.student.m[item.date] === Number(item.mark)) {
+      if (item.old === undefined) delete item.student.m[item.date]; else item.student.m[item.date] = item.old;
+    }
+    entry.failed.push(item.name + (reason ? ' (' + reason + ')' : ''));
+  }
+  function pumpQueue() {
+    if (entry.sending.length || !entry.queue.length) return;
+    entry.sending = entry.queue.splice(0, 50);
+    entry.failed = [];
+    api('saveMarks', [state.token, entry.sending.map(function (i) {
+      return { grade:i.grade, no:i.no, date:i.date, mark:i.mark };
+    })], function (results) {
+      var batch = entry.sending;
+      entry.sending = [];
+      results.forEach(function (r, i) {
+        if (r.error) { revertItem(batch[i], r.error); return; }
+        var text = r.name + ' - ' + r.date + ' - ලකුණු ' + r.mark;
+        if (r.previous !== null && r.previous !== r.mark) text += ' (පෙර ලකුණු ' + r.previous + ')';
+        entry.lastSaved = text;
+      });
+      showQueue();
+      pumpQueue();
+    }, function (err) {
+      var batch = entry.sending.concat(entry.queue);
+      entry.sending = []; entry.queue = [];
+      batch.forEach(function (item) { revertItem(item, err.message); });
+      showQueue();
+    });
+  }
+  /** පිවිසුම කල් ඉකුත් වූ විට Save නොවූ ලකුණු දැනුම් දෙයි. */
+  function queueLostText() {
+    var batch = entry.sending.concat(entry.queue);
+    entry.sending = []; entry.queue = [];
+    batch.forEach(function (item) { revertItem(item); });
+    var text = entry.failed.length ? ' Save නොවූ ලකුණු: ' + entry.failed.join(', ') + '.' : '';
+    entry.failed = [];
+    return text;
+  }
+  window.addEventListener('beforeunload', function (e) {
+    if (waitingCount()) { e.preventDefault(); e.returnValue = ''; }
+  });
+
   // ===== ලකුණු ඇතුළත් කිරීම =====
   function renderEntry(view) {
     var d = state.data, allowed = allowedGrades();
@@ -839,6 +899,7 @@
       entry.status = text || ''; entry.statusKind = kind || '';
       els.status.textContent = entry.status; els.status.className = entry.statusKind;
     }
+    showQueue.setStatus = setStatus;
     function lookup() {
       var raw = els.number.value.trim(), number = raw, m = /^([0-9]+)_([0-9]+)$/.exec(raw);
       entry.grade = els.grade.value; entry.number = els.number.value; entry.date = els.date.value;
@@ -859,7 +920,7 @@
           els.numberNote.textContent = 'මෙම අංකයේ සිසුවෙක් නැහැ.';
         }
       }
-      els.save.disabled = !current || entry.saving;
+      els.save.disabled = !current;
     }
     els.grade.addEventListener('change', function () { setStatus(''); lookup(); els.number.focus(); });
     els.date.addEventListener('change', function () { setStatus(''); lookup(); });
@@ -872,18 +933,16 @@
     });
     add(view, h('section', { 'class':'panel wide' }, h('form', { 'class':'entry', autocomplete:'off', on:{ submit:function (e) {
       e.preventDefault();
-      if (!current || entry.saving) return;
-      var student = current, grade = els.grade.value, date = els.date.value;
-      entry.saving = true; els.save.disabled = true; setStatus('Save වෙමින්...');
-      api('saveMark', [state.token, { grade:grade, no:student.no, date:date, mark:els.mark.value }], function (r) {
-        entry.saving = false;
-        student.m[date] = r.mark;
-        var text = r.name + ' - ' + r.date + ' - ලකුණු ' + r.mark;
-        if (r.previous !== null && r.previous !== r.mark) text += ' (පෙර ලකුණු ' + r.previous + ' වෙනස් කළා)';
-        setStatus(text + ' ✓', 'ok');
-        els.number.value = ''; els.mark.value = ''; entry.mark = '';
-        lookup(); els.number.focus();
-      }, function (err) { entry.saving = false; setStatus(err.message, 'err'); lookup(); });
+      if (!current) return;
+      var date = els.date.value, mark = Number(els.mark.value);
+      // සේවාදායකයට යවන තුරු නොසිට ඊළඟ සිසුවාට යාමට ඉඩ දෙයි.
+      entry.queue.push({ grade:els.grade.value, no:current.no, name:current.name, date:date, mark:els.mark.value,
+                         student:current, old:current.m[date] });
+      current.m[date] = mark;
+      els.number.value = ''; els.mark.value = ''; entry.mark = '';
+      lookup(); els.number.focus();
+      showQueue();
+      pumpQueue();
     } } },
       h('div', { 'class':'field' }, h('label', { 'for':'grade' }, 'ශ්‍රේණිය'), els.grade),
       h('div', { 'class':'field' }, h('label', { 'for':'number' }, 'සිසුවාගේ අංකය'), els.number, els.numberNote),
@@ -969,6 +1028,7 @@
   function afterChange(text) {
     state.notice = { text:text, kind:'ok' };
     state.renameKey = null; state.confirmKey = null;
+    state.pending = null;
     render();
   }
   /** Sheet එකේ වෙනස් වූ නිසා ක්‍රියාව අසාර්ථක වුවහොත් ලැයිස්තුවද අලුත් කරයි. */
@@ -1115,6 +1175,7 @@
     render();
   }
   function render() {
+    if (state.pending) { useData(state.pending); state.pending = null; }
     hideTip();
     if (observer) observer.disconnect();
     var view = clear(document.getElementById('view'));
@@ -1136,38 +1197,61 @@
     else if (state.view === 'teachers') renderTeachers(view);
     else renderEntry(view);
   }
+  function prepare(data) {
+    data.grades.forEach(function (g) {
+      g.students.forEach(function (st) {
+        st.m = {};
+        st.marks.forEach(function (v, i) { if (v !== null) st.m[g.dates[i]] = v; });
+      });
+    });
+    return data;
+  }
+  function useData(data) {
+    if (!state.anchor || state.anchor === (state.data && state.data.today)) state.anchor = data.today;
+    state.data = data;
+  }
+  function savedData() {
+    try { var raw = localStorage.getItem('marks-data'); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
+  }
+  function rememberData(data) {
+    try { localStorage.setItem('marks-data', JSON.stringify(data)); } catch (e) {}
+  }
+  var INPUT_VIEWS = ['entry', 'students', 'teachers', 'account', 'login'];
   function load(fresh) {
     var view = document.getElementById('view');
-    view.style.opacity = state.data ? '.55' : '';
-    api(fresh && state.token ? 'getFreshData' : 'getDashboardData', fresh && state.token ? [state.token] : [], function (data) {
-        data.grades.forEach(function (g) {
-          g.students.forEach(function (st) {
-            st.m = {};
-            st.marks.forEach(function (v, i) { if (v !== null) st.m[g.dates[i]] = v; });
-          });
-        });
-        state.data = data;
-        if (!state.anchor) state.anchor = data.today;
-        view.style.opacity = '';
-        render();
-      }, function (err) {
-        view.style.opacity = '';
-        clear(view);
-        add(view, h('div', { id:'splash' }, h('p', {}, err.message),
-          h('button', { type:'button', 'class':'primary', on:{ click:function () { load(true); } } }, 'නැවත උත්සාහ කරන්න')));
-      });
+    if (fresh === true) view.style.opacity = '.55';
+    api(fresh === true && state.token ? 'getFreshData' : 'getDashboardData', fresh === true && state.token ? [state.token] : [], function (data) {
+      rememberData(data);
+      prepare(data);
+      view.style.opacity = '';
+      // ටයිප් කරන අතරේ පිටුව අලුත් නොකරයි. ඊළඟ වතාවේ පෙන්වයි.
+      if (fresh !== true && state.data && INPUT_VIEWS.indexOf(state.view) !== -1) { state.pending = data; return; }
+      useData(data);
+      render();
+    }, function (err) {
+      view.style.opacity = '';
+      if (state.data) { if (fresh === true) { state.notice = { text:err.message, kind:'err' }; render(); } return; }
+      clear(view);
+      add(view, h('div', { id:'splash' }, h('p', {}, err.message),
+        h('button', { type:'button', 'class':'primary', on:{ click:function () { load(true); } } }, 'නැවත උත්සාහ කරන්න')));
+    });
   }
   (function start() {
     if (!/^https:[/][/]script[.]google[.]com[/]macros[/]s[/].+[/]exec$/.test(window.API_URL || '')) {
       document.getElementById('splash').textContent = 'config.js ගොනුවේ Web app URL එක නිවැරදි නැහැ.';
       return;
     }
+    // පෙර ලබාගත් දත්ත ක්ෂණිකව පෙන්වා, පසුබිමෙන් අලුත් කරයි.
+    var saved = savedData();
+    if (saved) { useData(prepare(saved)); render(); }
     var token = savedToken();
-    if (!token) { load(); return; }
-    api('whoAmI', [token], function (user) {
-      if (user) { state.token = token; state.user = user; } else { forgetSession(); }
-      load();
-    }, function () { forgetSession(); load(); });
+    if (token) {
+      api('whoAmI', [token], function (user) {
+        if (user) { state.token = token; state.user = user; } else { forgetSession(); }
+        if (state.data) render();
+      }, function () {});
+    }
+    load();
   })();
 </script>
 </body>
